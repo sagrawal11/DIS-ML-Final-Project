@@ -1,0 +1,14 @@
+# Pinned to the versions this project was developed and verified against.
+# SHAP is computed via XGBoost's native TreeSHAP (predict(pred_contribs=True)),
+# so the `shap` package is intentionally not a dependency (it conflicts with the
+# numpy 1.26 stack below).
+numpy==1.26.4
+pandas==2.2.2
+matplotlib==3.9.2
+scikit-learn==1.5.1
+xgboost==3.0.2
+seaborn==0.13.2
+
+# Running the notebooks
+jupyter==1.0.0
+nbconvert==7.16.4
