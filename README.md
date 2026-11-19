@@ -34,11 +34,11 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Then run the notebooks **in order**, since notebook 02 reads the clean table that notebook 01 produces:
+Then run the notebooks **in order**. Right now `01_data_validation_preprocessing.ipynb` is the one that's in; the modelling notebook (`02_baselines_and_regime_shift.ipynb`) is the next iteration and reads the clean table that 01 writes, so it'll run second once it lands:
 
 ```bash
 jupyter lab      # or: jupyter notebook
-# run notebooks/01_data_validation_preprocessing.ipynb first, then 02
+# run notebooks/01_data_validation_preprocessing.ipynb first, then 02 when it's added
 ```
 
 Notebook 01 downloads the data on its first run (a few minutes, network required) and is a no-op on reruns once the data is present. To run everything headless instead:
@@ -53,7 +53,7 @@ jupyter nbconvert --to notebook --execute --inplace notebooks/01_data_validation
 final_project/
 ├── notebooks/
 │   ├── 01_data_validation_preprocessing.ipynb   # download, validate, clean, target, EDA
-│   └── 02_baselines_and_regime_shift.ipynb      # modelling iteration (baselines + regime shift)
+│   └── 02_baselines_and_regime_shift.ipynb      # modelling: baselines + regime shift (next iteration, WIP)
 ├── src/f1lap/                 # the data pipeline, imported by the notebooks
 │   ├── download.py            # TracingInsights sparse checkout
 │   ├── clean.py               # load_raw, the cleaning funnel, and the target
