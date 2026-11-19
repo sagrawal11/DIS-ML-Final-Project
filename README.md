@@ -70,7 +70,7 @@ The heavy data logic lives in `src/f1lap/` so the notebooks stay readable and th
 ## References and AI use
 
 - **Data:** [TracingInsights](https://github.com/TracingInsights) season repositories, derived from [FastF1](https://github.com/theOehrly/Fast-F1).
-- **AI use:** I used Claude (Anthropic) as a collaborator throughout this project. It helped with finding and vetting the data source, drafting the project proposal, building the data validation and preprocessing notebook, and setting up this repository (extracting the `f1lap` package, writing the README, and wiring up the modelling notebook). All modelling decisions, the research question, and the final analysis are my own, and every result in the notebooks is reproduced from the committed code.
+- **AI use:** I used Claude (Anthropic) as a collaborator throughout this project. It helped with finding and vetting the data source, drafting the project proposal, building the data validation and preprocessing notebook, and setting up this repository (extracting the `f1lap` package, writing the README, and wiring up the modelling notebook). All modelling decisions, the research question, and the final analysis are our own, and every result in the notebooks is reproduced from the committed code.
 
 ## License
 
