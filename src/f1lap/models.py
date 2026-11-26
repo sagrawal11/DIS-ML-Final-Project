@@ -21,11 +21,11 @@ from xgboost import XGBRegressor
 SEED = 42
 DRY_COMPOUNDS = ["SOFT", "MEDIUM", "HARD"]
 
-# XGBoost defaults; tuned values override these (see notebook 02).
-XGB_DEFAULTS = dict(n_estimators=400, max_depth=6, learning_rate=0.05,
-                    subsample=0.8, colsample_bytree=0.8, min_child_weight=5,
-                    tree_method="hist", random_state=SEED, n_jobs=-1,
-                    objective="reg:squarederror")
+# XGBoost defaults; tuned values override these (see notebook 04).
+XGB_DEFAULTS = {"n_estimators": 400, "max_depth": 6, "learning_rate": 0.05,
+                    "subsample": 0.8, "colsample_bytree": 0.8, "min_child_weight": 5,
+                    "tree_method": "hist", "random_state": SEED, "n_jobs": -1,
+                    "objective": "reg:squarederror"}
 
 
 def make_xgb(**overrides):
@@ -84,6 +84,35 @@ class ResidualModel:
         return self.phys.predict(df) + self.xgb.predict(X)
 
 
+MODELS = ["Physics", "XGBoost", "Residual"]
+COLORS = {"Physics": "#718096", "XGBoost": "#2b6cb0", "Residual": "#c53030"}
+CONFIG_PATH = "results/model_config.json"  # feature groups + tuned params, written by notebook 04
+
+
+def fit_predict(name, df, X, y, tr, te, params):
+    """Fit model `name` on the rows in mask `tr` and predict the rows in mask `te`.
+
+    df holds the raw columns (the physics baseline needs them), X the aligned
+    encoded feature matrix, y the target; params are the tuned XGBoost params.
+    """
+    dtr, Xtr, ytr = df[tr], X[tr], np.asarray(y[tr], float)
+    dte, Xte = df[te], X[te]
+    if name == "Physics":
+        return PhysicsBaseline().fit(dtr, ytr).predict(dte)
+    if name == "XGBoost":
+        return make_xgb(**params).fit(Xtr, ytr).predict(Xte)
+    if name == "Residual":
+        return ResidualModel(**params).fit(dtr, Xtr, ytr).predict(dte, Xte)
+    raise ValueError(name)
+
+
+def evaluate_split(df, X, y, tr, te, params, models=MODELS):
+    """MAE/RMSE of every model for one train/test split, one row per model."""
+    yte = np.asarray(y[te], float)
+    return pd.DataFrame({n: metrics(yte, fit_predict(n, df, X, y, tr, te, params))
+                         for n in models}).T
+
+
 def breakdown(df, y, yhat, by, unseen=None):
     """Per-group MAE/RMSE, sorted worst-first. `unseen` flags group values that did
     not appear in the training era (e.g. {'Cadillac'} or {'Madrid'})."""
@@ -122,6 +151,11 @@ def _selfcheck():
     rm = ResidualModel(n_estimators=60, max_depth=3).fit(df, X, y2)
     phys_only = PhysicsBaseline().fit(df, y2)
     assert metrics(y2, rm.predict(df, X))["MAE"] < metrics(y2, phys_only.predict(df))["MAE"]
+
+    # fit_predict / evaluate_split route to the same models on boolean masks.
+    tr = pd.Series(np.arange(n) < 600); te = ~tr
+    ev = evaluate_split(df, X, pd.Series(y2), tr, te, {"n_estimators": 60, "max_depth": 3})
+    assert list(ev.index) == MODELS and ev.loc["Residual", "MAE"] < ev.loc["Physics", "MAE"]
 
     bd = breakdown(df, y, pb.predict(df), "compound", unseen={"SOFT"})
     assert bool(bd.loc[bd.compound == "SOFT", "unseen"].iloc[0]) is True

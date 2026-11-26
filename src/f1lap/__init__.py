@@ -10,4 +10,4 @@ models   : physics baseline, XGBoost, residual model, metrics, breakdowns.
 The notebooks import from here so the cleaning/feature/modelling logic lives in one place.
 """
 
-from . import download, clean, features, models  # noqa: F401
+from . import clean, download, features, models  # noqa: F401
