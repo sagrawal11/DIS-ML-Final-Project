@@ -77,3 +77,17 @@ Small things caught along the way: the coverage figure labelled the 2026 Madrid 
 We rebuilt the few-shot experiment around the flaws we found in the self-review: 2026 races are now added in **calendar order** (with 5 random orders as a robustness check), and every point is scored on the **same fixed test set** (the last 8 dry races of 2026), so the curve finally compares like with like. We also compared four adaptation strategies, each set by a rule fixed in advance, because tuning them on the test races would be leakage: naive append, upweighting 2026 to the weight of a full season, warm-start fine-tuning (continuing to boost the pre-2026 model on new races) and training on 2026 alone.
 
 The results changed our answer to the research question. With measurement features, retraining barely matters: 11 races of 2026 data buy ~2%, the clever strategies are no better (fine-tuning on one race actually hurts, as 300 trees learn that circuit's quirks), and 2026-only training never catches up with using the old seasons. The most striking result is that a model which **reads the race** through in-race features, never retrained, beats a model without them even after 11 races of retraining (0.59 vs 0.67 s). In our first iteration the story was "the first 2026 race helps a lot, then it plateaus"; now we can say *why*: what that first race was teaching the model, the features now deliver every weekend, and the rest of the gap is lap dynamics that more of the same data can't teach.
+
+## Nov 26 (cont.) - diagnosis: what physically changed
+
+Notebook 05 told us the remaining 2026 error lives in the lap-to-lap dynamics, so notebook 07 went after the physics with four analyses that use the data we'd been ignoring (sector times, speed traps, gaps, qualifying).
+
+Two of our prior expectations turned out wrong, which we think is the most valuable part:
+- **We expected the 2026 cars to lose time on the straights** (energy "clipping" with the new 50/50 power units). Median top speeds barely moved, and the slowdown was if anything *larger* on twisty circuits (Hungary +4.8%, its all-corners middle sector +7%). The loss looks like cornering, i.e. reduced downforce, with clear clipping only at Monza.
+- **We expected energy management to push race pace further from qualifying pace.** The opposite: race laps are closer to qualifying in 2026 (6.0% vs 7.1-7.6%), at 11 of 14 shared circuits. We had to drop 13 wet-qualifying weekends first, because a wet "best" qualifying lap is slower than the race and showed up as nonsense negative gaps.
+
+And two that landed cleanly:
+- **DRS removal more than halved the straight-line boost of following within 1 s** (~7.7 -> ~3.3 kph, each lap measured against the driver's own race average so car pace cancels out).
+- **Separating fuel from tyre wear** with a driver-race fixed-effects regression (a pit stop resets tyre age but not fuel, which is what identifies them) and a race-cluster bootstrap: soft tyres degrade about half as fast in 2026 (intervals don't overlap) and the medium/hard pace offsets vs soft vanish. That's a concrete physical reason the model's learned tyre behaviour stopped applying, which closes the loop on notebook 05's decomposition. The fuel effect is ~17% smaller, but its interval overlaps, so we call that suggestive.
+
+Checking every sentence against the actual outputs caught three overstatements before they shipped (the DRS boost "halved" when it more than halved, Suzuka "every trap slower" when only its main trap was, and fuel intervals that "separate" when they just overlap).

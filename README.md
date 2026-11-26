@@ -34,7 +34,7 @@ A few data quirks the pipeline handles explicitly, because event names are not c
 - **Wrong and overconfident.** Split-conformal 90% intervals cover 90.5% of laps in a normal year but only 81.7% in 2026 (55% at Monaco and the new Madrid circuit). Recalibrating the interval width on the 2026 races already run restores ~90% average coverage, at the cost of a wider band (+/-1.0 -> +/-1.4 s). A shift classifier only reaches AUC 0.59: no single 2026 lap looks obviously different, which is what makes the shift easy to miss.
 - **Reading the race beats retraining.** On a fixed test set of the last 8 races of 2026, a model with in-race features (recent pace, gaps) that is *never retrained* (0.59 s) beats a model without them even after retraining on 11 races of 2026 (0.67 s). With measurement features, adding 2026 races to training buys only ~2%, and the cleverer strategies (upweighting 2026, warm-start fine-tuning, training on 2026 alone) do no better or worse than simply appending the new races.
 - **Champions don't ease off.** Races run after both titles were decided show no slowdown from the champion team, and the regime-shift result holds with or without them.
-- **SHAP** (via XGBoost's native TreeSHAP) shows the 2026 model leaning on measured pace (`recent_pace`, `team_quali_gap_pct`), while `position`, which dominated the first iteration as a stand-in for car pace, fades.
+- **What physically changed** (notebook 07): soft tyres degrade about half as fast in 2026 and the pace gap between compounds vanishes (medium/hard were ~0.3-0.4 s slower than soft; now ~0); removing DRS more than halved the straight-line boost of running within 1 s of another car (~7.7 -> ~3.3 kph); the cars lost time mainly in corners rather than on straights; and race pace sits closer to qualifying pace (6.0% vs 7.1-7.6% before). SHAP shows the 2026 model leaning on measured pace (`recent_pace`, `team_quali_gap_pct`).
 
 ## Setup
 
@@ -69,7 +69,7 @@ final_project/
 │   ├── 04_baselines_tuning.ipynb              # three models, per-set tuning, feature ablation, in-era check
 │   ├── 05_regime_shift.ipynb                  # drift vs 2026, names vs measurements, error decomposition, shift detection, conformal intervals
 │   ├── 06_adaptation.ipynb                    # adaptation strategies, reading the race vs retraining
-│   └── 07_diagnosis.ipynb                     # SHAP: which relationships changed
+│   └── 07_diagnosis.ipynb                     # SHAP, sectors/speed traps, DRS removal, quali vs race, fuel vs tyre
 ├── src/f1lap/                 # the pipeline + models, imported by the notebooks
 │   ├── download.py            # TracingInsights sparse checkout
 │   ├── clean.py               # loaders (race, qualifying, session info), cleaning funnel, target

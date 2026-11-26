@@ -73,7 +73,7 @@ def load_session_info(seasons, root="."):
 
 def load_quali(seasons, root="."):
     """Every qualifying lap: season, event, driver, team, lap time, deleted flag,
-    speed-trap reading and knockout session (Q1/Q2/Q3)."""
+    speed-trap reading, knockout session (Q1/Q2/Q3) and tyre compound."""
     frames = []
     for y in seasons:
         for f in glob.glob(os.path.join(root, f"ti{y}", "*", "Qualifying", "session_laptimes.json")):
@@ -82,8 +82,8 @@ def load_quali(seasons, root="."):
             q["season"], q["event"] = y, f.split(os.sep)[-3]
             frames.append(q)
     q = pd.concat(frames, ignore_index=True).replace("None", np.nan).infer_objects()
-    q = q[["season", "event", "drv", "team", "time", "del", "vst", "qs"]]
-    q.columns = ["season", "event", "driver", "team", "lap_time_s", "deleted", "speed_trap_kph", "session"]
+    q = q[["season", "event", "drv", "team", "time", "del", "vst", "qs", "compound"]]
+    q.columns = ["season", "event", "driver", "team", "lap_time_s", "deleted", "speed_trap_kph", "session", "compound"]
     for c in ["lap_time_s", "speed_trap_kph"]:
         q[c] = pd.to_numeric(q[c], errors="coerce")
     return q
