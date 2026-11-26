@@ -29,6 +29,9 @@ A few data quirks the pipeline handles explicitly, because event names are not c
 - **Measuring pace beats naming teams.** Going from 6 numeric features plus team one-hots to 25 features built from qualifying, in-race context and circuit character cuts in-era error by ~20% (2025 test MAE 0.59 -> 0.47 s). A model with *no team names at all* does just as well, because qualifying pace and recent lap times already tell it how fast each car is.
 - **Saturday predicts Sunday, and far more so in 2026.** A team's qualifying gap to pole correlates with its race pace at r = 0.62 in 2025 and r = 0.91 in 2026, as the field spread from ~3% to ~6% off pole.
 - **The 2026 regime shift adds ~30%**: XGBoost MAE is ~0.63 s on 2026 vs ~0.48 s on average for the two normal years (2024, 2025). The richer features lower error in every era by about the same proportion, so the *relative* jump barely moves from the first iteration (+31%). The unseen **Cadillac** team (1.01 s) and **Madrid** circuit (1.02 s) are still the worst-hit, though much improved (from 1.54 and 1.29 s).
+- **Measuring pace helps most exactly where the rules changed.** Qualifying and driver features cut 2026 error ~4x more than in a normal year (-5% vs -1%), but no feature set closes the gap: the relative jump only falls from +36% to ~+30%.
+- **What's left is how the race is driven.** We split error into *pace-level* error (wrong overall pace for a driver in a race) and *within-race* error. Pace-level error is 49% of 2026 error for the team-names model vs 21% in a normal year; measurement features cut it to 32%. But even with it removed entirely, 2026 laps stay ~20% harder to predict, so the new rules changed lap-to-lap dynamics, not just the pecking order.
+- **Wrong and overconfident.** Split-conformal 90% intervals cover 90.5% of laps in a normal year but only 81.7% in 2026 (55% at Monaco and the new Madrid circuit). Recalibrating the interval width on the 2026 races already run restores ~90% average coverage, at the cost of a wider band (+/-1.0 -> +/-1.4 s). A shift classifier only reaches AUC 0.59: no single 2026 lap looks obviously different, which is what makes the shift easy to miss.
 - **Few-shot recovery is slow and partial**: adding up to eight 2026 races only brings MAE from 0.63 to ~0.60 s, nowhere near the in-era bar.
 - **Champions don't ease off.** Races run after both titles were decided show no slowdown from the champion team, and the regime-shift result holds with or without them.
 - **SHAP** (via XGBoost's native TreeSHAP) shows the 2026 model leaning on measured pace (`recent_pace`, `team_quali_gap_pct`), while `position`, which dominated the first iteration as a stand-in for car pace, fades.
@@ -64,7 +67,7 @@ final_project/
 │   ├── 02_eda.ipynb                           # target by season, stint pace, pace change by circuit
 │   ├── 03_feature_engineering.ipynb           # qualifying, driver, in-race, circuit, weather features + leakage tests
 │   ├── 04_baselines_tuning.ipynb              # three models, per-set tuning, feature ablation, in-era check
-│   ├── 05_regime_shift.ipynb                  # normal drift vs 2026, error breakdowns
+│   ├── 05_regime_shift.ipynb                  # drift vs 2026, names vs measurements, error decomposition, shift detection, conformal intervals
 │   ├── 06_adaptation.ipynb                    # few-shot recovery with 2026 races
 │   └── 07_diagnosis.ipynb                     # SHAP: which relationships changed
 ├── src/f1lap/                 # the pipeline + models, imported by the notebooks
