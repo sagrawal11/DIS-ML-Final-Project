@@ -46,6 +46,24 @@ def load_raw(seasons, root="."):
     return fix_temps(raw.rename(columns=RENAME))
 
 
+def load_session_info(seasons, root="."):
+    """One row per race: start date (for chronological order), round number within
+    the season, circuit key (a stable circuit ID, unlike event names) and the
+    scheduled race distance in laps."""
+    rows = []
+    for y in seasons:
+        for f in glob.glob(os.path.join(root, f"ti{y}", "*", "Race", "session_info.json")):
+            with open(f) as fh:
+                d = json.load(fh)
+            rows.append({"season": y, "event": f.split(os.sep)[-3],
+                         "race_date": pd.Timestamp(d["session_info"]["StartDate"]),
+                         "circuit_key": d["session_info"]["Meeting"]["Circuit"]["Key"],
+                         "scheduled_laps": d.get("total_laps")})
+    info = pd.DataFrame(rows).sort_values("race_date", ignore_index=True)
+    info["round"] = info.groupby("season").cumcount() + 1
+    return info
+
+
 def fix_temps(raw):
     """Weather-sensor glitches: no F1 race runs at or below 0 °C, yet e.g. lap 5 of
     the 2026 Las Vegas GP reads 0.0 °C track temperature for every car while the laps

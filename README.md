@@ -29,7 +29,7 @@ A few data quirks the pipeline handles explicitly, because event names are not c
 The first modelling iteration (notebooks 04-07) lands the headline numbers:
 
 - **In-era MAE ~0.58 s** (train 2022-2024, test 2025) for XGBoost and the residual model, with the physics baseline a clear floor at ~0.76 s.
-- **The 2026 regime shift adds ~25%**: error jumps to ~0.79 s on 2026, well above the flat 2024-2025 drift. The unseen **Cadillac** team (1.53 s) and **Madrid** circuit (1.27 s) are the worst-hit.
+- **The 2026 regime shift adds ~29%**: error jumps to ~0.79 s on 2026, vs ~0.61 s on average for the two normal years (2024, 2025). The jump holds (+32%) when the races run after both titles were decided are removed. The unseen **Cadillac** team (1.53 s) and **Madrid** circuit (1.27 s) are the worst-hit.
 - **Few-shot recovery is quick but partial**: one 2026 race pulls MAE down to ~0.76 s and two to ~0.74 s, then it plateaus - eight races still don't reach the in-era bar.
 - **SHAP** (via XGBoost's native TreeSHAP) shows the relationships that moved most are `position` and the new team, not the tyre curve, which the race-median target already absorbs.
 

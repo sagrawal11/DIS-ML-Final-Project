@@ -13,6 +13,18 @@ import pandas as pd
 LINEAGE = {"AlphaTauri": "Racing Bulls", "RB": "Racing Bulls",
            "Alfa Romeo": "Sauber/Audi", "Kick Sauber": "Sauber/Audi", "Audi": "Sauber/Audi"}
 
+# Races run after BOTH world titles were mathematically decided. Clinches:
+#   2022 drivers Japan, constructors USA        2023 constructors Japan, drivers Qatar sprint
+#   2024 / 2025 constructors or drivers went to the Abu Dhabi finale -> no such races
+#   2026 drivers Mexico City, constructors Sao Paulo (Formula1.com / ESPN race reports)
+# Used as a robustness check (notebooks 02 and 05), not a filter: champions did not ease off.
+POST_CLINCH = {
+    (2022, "Mexico City Grand Prix"), (2022, "São Paulo Grand Prix"), (2022, "Abu Dhabi Grand Prix"),
+    (2023, "Qatar Grand Prix"), (2023, "United States Grand Prix"), (2023, "Mexico City Grand Prix"),
+    (2023, "São Paulo Grand Prix"), (2023, "Las Vegas Grand Prix"), (2023, "Abu Dhabi Grand Prix"),
+    (2026, "Las Vegas Grand Prix"),
+}
+
 # Numeric features fed to the models (one-hot columns are appended by encode_features).
 NUM_FEATURES = ["tyre_age", "fuel_proxy", "stint", "position", "air_temp_c", "track_temp_c"]
 
@@ -29,6 +41,8 @@ def add_features(df):
     df.loc[(df.season < 2026) & (df.circuit == "Spanish"), "circuit"] = "Barcelona"
     df.loc[(df.season == 2026) & (df.circuit == "Spanish"), "circuit"] = "Madrid"
     df.loc[(df.season == 2026) & (df.circuit == "Bahrain"), "circuit"] = "Sepang"
+
+    df["post_clinch"] = [(s, e) in POST_CLINCH for s, e in zip(df.season, df.event)]
 
     # Laps of fuel remaining: the race's final lap number minus the current lap.
     df["fuel_proxy"] = df.groupby(["season", "event"]).lap.transform("max") - df.lap
@@ -61,6 +75,8 @@ def _selfcheck():
     assert bool(d.loc[d.team == "Cadillac", "unseen_team"].iloc[0]) is True
     # fuel_proxy: British GP has laps {3,5} -> max 5 -> lap 3 has 2 laps of fuel left.
     assert d.loc[(d.event == "British Grand Prix") & (d.lap == 3), "fuel_proxy"].iloc[0] == 2
+    assert not d.post_clinch.any()  # none of the synthetic races are post-clinch
+    assert (2023, "Las Vegas Grand Prix") in POST_CLINCH and len(POST_CLINCH) == 10
     assert list(encode_features(d).columns[:6]) == NUM_FEATURES
     print("features.py self-check passed")
 
