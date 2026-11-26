@@ -43,7 +43,19 @@ def load_raw(seasons, root="."):
     raw = raw[RAW_COLS]
     for c in NUMERIC_COLS:
         raw[c] = pd.to_numeric(raw[c], errors="coerce")
-    return raw.rename(columns=RENAME)
+    return fix_temps(raw.rename(columns=RENAME))
+
+
+def fix_temps(raw):
+    """Weather-sensor glitches: no F1 race runs at or below 0 °C, yet e.g. lap 5 of
+    the 2026 Las Vegas GP reads 0.0 °C track temperature for every car while the laps
+    either side read ~14 °C. Treat non-positive temperatures as missing and fill
+    them with that race's median."""
+    raw = raw.copy()
+    for c in ["air_temp_c", "track_temp_c"]:
+        raw.loc[raw[c] <= 0, c] = np.nan
+        raw[c] = raw[c].fillna(raw.groupby(["season", "event"])[c].transform("median"))
+    return raw
 
 
 def wet_races(raw):
@@ -127,6 +139,12 @@ def _selfcheck():
     assert list(funnel.laps) == sorted(funnel.laps, reverse=True), "funnel must be non-increasing"
     dft = add_target(df)
     assert abs(dft.groupby(["season", "event"]).lap_delta_s.median()).max() < 1e-9
+
+    # A 0.0 °C glitch is replaced by its own race's median, never another race's.
+    t = fix_temps(pd.DataFrame({"season": [2026] * 3 + [2025], "event": ["LV"] * 3 + ["X"],
+                                "air_temp_c": [12.0, 12.0, 12.0, 30.0],
+                                "track_temp_c": [14.0, 0.0, 15.0, 50.0]}))
+    assert t.track_temp_c.tolist() == [14.0, 14.5, 15.0, 50.0], t.track_temp_c.tolist()
     print("clean.py self-check passed")
 
 

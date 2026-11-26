@@ -14,9 +14,9 @@ How much does lap-time prediction error increase when a model trained on 2022-20
 
 ## Data
 
-The data comes from the [TracingInsights](https://github.com/TracingInsights) season repositories (one repo per year, `TracingInsights/2022` through `TracingInsights/2026`), which publish [FastF1](https://github.com/theOehrly/Fast-F1)-derived race lap tables: lap time, tyre compound, stint, tyre age, track status, pit flags, and per-lap weather for every race. Notebook 01 sparse-checks out only the race-level `*/Race/session_laptimes.json` files (~20 MB per season) rather than the full repos, which also hold GBs of telemetry and radio.
+The data comes from the [TracingInsights](https://github.com/TracingInsights) season repositories (one repo per year, `TracingInsights/2022` through `TracingInsights/2026`), which publish [FastF1](https://github.com/theOehrly/Fast-F1)-derived lap tables: lap time, tyre compound, stint, tyre age, track status, pit flags, sector times, speed traps, and per-lap weather for every session. Notebook 01 sparse-checks out only the files we use (race and qualifying lap tables, plus each race's session info and corner map, ~20 MB per season) rather than the full repos, which also hold GBs of telemetry and radio. Each season is **pinned to an exact TracingInsights commit** (frozen on 2026-11-26, see `src/f1lap/download.py`), so a fresh clone reproduces our numbers even as new races get added upstream.
 
-The raw data funnels from **124,920 laps down to 89,737 clean, representative green-flag laps across 112 races** (22 + 22 + 24 + 24 + 20), of which 20 are held in 2026 and 18 are dry. Full credit for the underlying data goes to TracingInsights and the FastF1 project. **No data is committed to this repo** (the `data/` and `ti20*/` folders are gitignored); everything is downloaded at runtime by notebook 01.
+The raw data funnels from **125,909 laps down to 90,488 clean, representative green-flag laps across 113 races** (22 + 22 + 24 + 24 + 21), of which 21 are held in 2026 (up to and including Las Vegas) and 19 are dry. Full credit for the underlying data goes to TracingInsights and the FastF1 project. **No data is committed to this repo** (the `data/` and `ti20*/` folders are gitignored); everything is downloaded at runtime by notebook 01.
 
 A few data quirks the pipeline handles explicitly, because event names are not circuits:
 
@@ -29,8 +29,8 @@ A few data quirks the pipeline handles explicitly, because event names are not c
 The first modelling iteration (notebooks 04-07) lands the headline numbers:
 
 - **In-era MAE ~0.58 s** (train 2022-2024, test 2025) for XGBoost and the residual model, with the physics baseline a clear floor at ~0.76 s.
-- **The 2026 regime shift adds ~25%**: error jumps to ~0.79 s on 2026, well above the flat 2024-2025 drift. The unseen **Cadillac** team (1.56 s) and **Madrid** circuit (1.27 s) are the worst-hit.
-- **Few-shot recovery is quick but partial**: the first 2026 race pulls MAE down to ~0.74 s, then it plateaus - eight races still don't reach the in-era bar.
+- **The 2026 regime shift adds ~25%**: error jumps to ~0.79 s on 2026, well above the flat 2024-2025 drift. The unseen **Cadillac** team (1.53 s) and **Madrid** circuit (1.27 s) are the worst-hit.
+- **Few-shot recovery is quick but partial**: one 2026 race pulls MAE down to ~0.76 s and two to ~0.74 s, then it plateaus - eight races still don't reach the in-era bar.
 - **SHAP** (via XGBoost's native TreeSHAP) shows the relationships that moved most are `position` and the new team, not the tyre curve, which the race-median target already absorbs.
 
 ## Setup
