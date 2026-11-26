@@ -46,3 +46,17 @@ Building them properly surfaced several things worth recording:
 - **Qualifying is a knockout, so "fastest lap" isn't "pole".** In 2022 Brazil, Verstappen set the session's fastest lap in dry Q1/Q2 while Magnussen took pole in wet Q3. `quali_rank` sorts by furthest session reached, then time, and matches 9 out of 9 poles we checked by hand. Eight late-2024 sessions have no Q1/Q2/Q3 labels in the data, so those fall back to best-lap order.
 - **F1's 107% rule cleans qualifying pace.** A driver whose best lap was a crash or an abort showed up as 38% off pole. Treating anything beyond 107% of pole as non-representative (85 of 2,289 driver-weekends) doubled the correlation between qualifying gap and race pace in 2022-2025, from 0.18 to 0.34.
 - **The biggest finding so far:** at team level, qualifying gap predicts race pace with r = 0.62 in 2025 and **r = 0.91 in 2026**, as the field spread from ~3% to ~6% off pole. In 2026, Saturday pace basically *is* Sunday pace, which is precisely the information a team-name feature can't carry across a rule change.
+
+## Nov 26 (cont.) - tuning and the feature ablation
+
+**Tightened the protocol first.** Our first iteration tuned on 2022-2025, which quietly included 2025, the season we then reported as the "unseen" in-era test. Tuning and feature selection now only ever see 2022-2024, and the final feature set is chosen by grouped cross-validation, never by how it does on 2026 (picking whichever set looked best on 2026 would be test-set leakage dressed up as analysis).
+
+**Ablation.** We added the feature groups one at a time and gave every set its own 54-point grid search (GroupKFold by race, 5 folds), so no set was handicapped by parameters tuned for another. Then one extra set: all features but **no team names**.
+- The **in-race** group is where the in-era gain is (CV MAE 0.595 -> 0.515 s). Recent pace and gaps are most of what makes a lap predictable.
+- **Qualifying barely moved the in-era numbers.** Within a stable era the team columns already carry car pace, so qualifying's value only shows when team identity goes stale.
+- **Circuit features helped more than their near-zero correlations suggested**, the signature of interactions.
+- **Dropping the team names cost nothing** (0.500 vs 0.498, a twentieth of the fold-to-fold spread), which is the cleanest support yet for "measure, don't name".
+
+**Tuning matters far less than features.** The top grid points were within ~0.002 s of each other against a ~0.039 s fold-to-fold spread, a flat plateau. The best point again sat on a grid edge (`min_child_weight`), so instead of shrugging we extended past it: it bought 0.001 s, confirming the plateau.
+
+**The result that surprised us.** The full feature set cut error by ~20% everywhere (2025: 0.59 -> 0.47 s; 2026: 0.80 -> 0.63 s), with the biggest gains exactly where team names failed (Cadillac 1.54 -> 1.01 s, Aston Martin 1.34 -> 0.97 s). But the *relative* regime-shift jump barely moved (+31% -> +30%). We expected measuring pace to specifically close the 2026 gap; instead it lifted both eras by about the same proportion. Understanding why is the next step.

@@ -86,7 +86,7 @@ class ResidualModel:
 
 MODELS = ["Physics", "XGBoost", "Residual"]
 COLORS = {"Physics": "#718096", "XGBoost": "#2b6cb0", "Residual": "#c53030"}
-PARAMS_PATH = "results/xgb_params.json"   # written by notebook 04, read by 05-07
+CONFIG_PATH = "results/model_config.json"  # feature groups + tuned params, written by notebook 04
 
 
 def fit_predict(name, df, X, y, tr, te, params):

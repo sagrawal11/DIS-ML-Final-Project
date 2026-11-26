@@ -215,10 +215,13 @@ def build_model_table(clean, raw, info, quali_laps, circuits):
     return df
 
 
-def encode_features(df, groups=("base",)):
-    """Numeric features from `groups`, plus one-hot compound and team lineage."""
+def encode_features(df, groups=("base",), team=True):
+    """Numeric features from `groups`, plus one-hot compound and (if `team`) one-hot
+    team lineage. team=False gives a 'measurements only' model that never sees
+    which car it is, only how fast that car has been measured to be."""
     cols = [c for g in groups for c in FEATURE_GROUPS[g]]
-    X = pd.get_dummies(df[["compound", "team_lineage"]], prefix=["cmp", "team"], dtype=int)
+    cats = ["compound", "team_lineage"] if team else ["compound"]
+    X = pd.get_dummies(df[cats], prefix=["cmp", "team"][:len(cats)], dtype=int)
     return pd.concat([df[cols].astype(float), X], axis=1)
 
 
@@ -307,7 +310,10 @@ def _selfcheck():
 
     X = encode_features(pd.DataFrame({c: [1.0] for c in FEATURE_GROUPS["base"]}
                                      | {"compound": ["SOFT"], "team_lineage": ["Ferrari"]}))
-    assert list(X.columns[:6]) == NUM_FEATURES
+    assert list(X.columns[:6]) == NUM_FEATURES and "team_Ferrari" in X.columns
+    X_no_team = encode_features(pd.DataFrame({c: [1.0] for c in FEATURE_GROUPS["base"]}
+                                             | {"compound": ["SOFT"], "team_lineage": ["Ferrari"]}), team=False)
+    assert not any(c.startswith("team_") for c in X_no_team.columns) and "cmp_SOFT" in X_no_team.columns
     print("features.py self-check passed")
 
 
