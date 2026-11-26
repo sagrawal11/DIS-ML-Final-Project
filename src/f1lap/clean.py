@@ -34,7 +34,8 @@ def load_raw(seasons, root="."):
     for y in seasons:
         pattern = os.path.join(root, f"ti{y}", "*", "Race", "session_laptimes.json")
         for f in sorted(glob.glob(pattern)):
-            df = pd.DataFrame(json.load(open(f)))
+            with open(f) as fh:
+                df = pd.DataFrame(json.load(fh))
             df["season"] = y
             df["event"] = f.split(os.sep)[-3]  # ti<year>/<event>/Race/session_laptimes.json
             frames.append(df)
@@ -73,12 +74,12 @@ def clean_laps(raw):
     step("Not lap 1", lambda d: d.lap > 1)
     step("No pit in/out lap", lambda d: d.pit_in.isna() & d.pit_out.isna())
     step("Green flag only", lambda d: d.track_status.astype(str) == "1")
-    step("Not deleted, accurate", lambda d: (d.deleted != True) & (d.is_accurate == True))  # noqa: E712
+    step("Not deleted, accurate", lambda d: (d.deleted != True) & (d.is_accurate == True))
     wet = wet_races(raw)
     step("Dry races, dry compounds",
          lambda d: ~d.set_index(["season", "event"]).index.isin(wet) & d.compound.isin(DRY_COMPOUNDS))
     step("No rainfall on lap, tyre age known",
-         lambda d: (d.rainfall != True) & d.tyre_age.notna())  # noqa: E712
+         lambda d: (d.rainfall != True) & d.tyre_age.notna())
     stint_med = df.groupby(["season", "event", "driver", "stint"]).lap_time_s.transform("median")
     step("Within 107% of stint median", lambda d: d.lap_time_s <= 1.07 * stint_med.loc[d.index])
 
@@ -99,10 +100,10 @@ def add_target(df):
 def _selfcheck():
     """Synthetic funnel check: each dirty row is dropped for the right reason."""
     def row(**kw):
-        base = dict(season=2024, event="R1", driver="VER", team="Ferrari", lap=3,
-                    lap_time_s=90.0, compound="MEDIUM", stint=1, tyre_age=3, position=1,
-                    track_status="1", pit_in=np.nan, pit_out=np.nan, is_accurate=True,
-                    deleted=False, air_temp_c=25, track_temp_c=35, rainfall=False)
+        base = {"season": 2024, "event": "R1", "driver": "VER", "team": "Ferrari", "lap": 3,
+                    "lap_time_s": 90.0, "compound": "MEDIUM", "stint": 1, "tyre_age": 3, "position": 1,
+                    "track_status": "1", "pit_in": np.nan, "pit_out": np.nan, "is_accurate": True,
+                    "deleted": False, "air_temp_c": 25, "track_temp_c": 35, "rainfall": False}
         base.update(kw)
         return base
 
