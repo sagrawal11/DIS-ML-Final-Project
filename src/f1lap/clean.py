@@ -2,7 +2,7 @@
 
 The cleaning logic here is the source of truth for the project: notebook 01
 calls these functions and reports the funnel. The headline numbers it produces
-(124,920 raw laps -> 89,737 clean laps across 112 races) must not change.
+(125,909 raw laps -> 90,488 clean laps across 113 races) must not change.
 """
 
 import glob
@@ -13,12 +13,19 @@ import numpy as np
 import pandas as pd
 
 # Raw JSON columns we keep, in order, and the names we give them.
+# Sector times and speed traps are outcomes of the lap itself, so they are kept for
+# analysis (notebooks 02 and 07) but never used as features for the same lap.
 RAW_COLS = ["season", "event", "drv", "team", "lap", "time", "compound", "stint", "life",
-            "pos", "status", "pin", "pout", "iacc", "del", "wAT", "wTT", "wR"]
-NUMERIC_COLS = ["time", "lap", "stint", "life", "pos", "wAT", "wTT"]
+            "pos", "status", "pin", "pout", "iacc", "del", "wAT", "wTT", "wR",
+            "sesT", "fresh", "wH", "wWS", "s1", "s2", "s3", "vi1", "vi2", "vfl", "vst"]
+NUMERIC_COLS = ["time", "lap", "stint", "life", "pos", "wAT", "wTT",
+                "sesT", "wH", "wWS", "s1", "s2", "s3", "vi1", "vi2", "vfl", "vst"]
 RENAME = {"drv": "driver", "time": "lap_time_s", "life": "tyre_age", "pos": "position",
           "status": "track_status", "pin": "pit_in", "pout": "pit_out", "iacc": "is_accurate",
-          "del": "deleted", "wAT": "air_temp_c", "wTT": "track_temp_c", "wR": "rainfall"}
+          "del": "deleted", "wAT": "air_temp_c", "wTT": "track_temp_c", "wR": "rainfall",
+          "sesT": "lap_end_time_s", "fresh": "tyre_fresh", "wH": "humidity", "wWS": "wind_speed",
+          "s1": "sector1_s", "s2": "sector2_s", "s3": "sector3_s", "vi1": "speed_i1_kph",
+          "vi2": "speed_i2_kph", "vfl": "speed_fl_kph", "vst": "speed_trap_kph"}
 
 DRY_COMPOUNDS = ["SOFT", "MEDIUM", "HARD"]
 WET_COMPOUNDS = ["INTERMEDIATE", "WET"]
@@ -62,6 +69,24 @@ def load_session_info(seasons, root="."):
     info = pd.DataFrame(rows).sort_values("race_date", ignore_index=True)
     info["round"] = info.groupby("season").cumcount() + 1
     return info
+
+
+def load_quali(seasons, root="."):
+    """Every qualifying lap: season, event, driver, team, lap time, deleted flag,
+    speed-trap reading and knockout session (Q1/Q2/Q3)."""
+    frames = []
+    for y in seasons:
+        for f in glob.glob(os.path.join(root, f"ti{y}", "*", "Qualifying", "session_laptimes.json")):
+            with open(f) as fh:
+                q = pd.DataFrame(json.load(fh))
+            q["season"], q["event"] = y, f.split(os.sep)[-3]
+            frames.append(q)
+    q = pd.concat(frames, ignore_index=True).replace("None", np.nan).infer_objects()
+    q = q[["season", "event", "drv", "team", "time", "del", "vst", "qs"]]
+    q.columns = ["season", "event", "driver", "team", "lap_time_s", "deleted", "speed_trap_kph", "session"]
+    for c in ["lap_time_s", "speed_trap_kph"]:
+        q[c] = pd.to_numeric(q[c], errors="coerce")
+    return q
 
 
 def fix_temps(raw):

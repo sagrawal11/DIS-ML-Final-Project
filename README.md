@@ -28,9 +28,9 @@ A few data quirks the pipeline handles explicitly, because event names are not c
 
 The first modelling iteration (notebooks 04-07) lands the headline numbers:
 
-- **In-era MAE ~0.58 s** (train 2022-2024, test 2025) for XGBoost and the residual model, with the physics baseline a clear floor at ~0.76 s.
-- **The 2026 regime shift adds ~29%**: error jumps to ~0.79 s on 2026, vs ~0.61 s on average for the two normal years (2024, 2025). The jump holds (+32%) when the races run after both titles were decided are removed. The unseen **Cadillac** team (1.53 s) and **Madrid** circuit (1.27 s) are the worst-hit.
-- **Few-shot recovery is quick but partial**: one 2026 race pulls MAE down to ~0.76 s and two to ~0.74 s, then it plateaus - eight races still don't reach the in-era bar.
+- **In-era MAE ~0.59 s** (train 2022-2024, test 2025) for XGBoost and the residual model, with the physics baseline a clear floor at ~0.76 s.
+- **The 2026 regime shift adds ~31%**: error jumps to ~0.80 s on 2026, vs ~0.61 s on average for the two normal years (2024, 2025). The jump holds (+32%) when the races run after both titles were decided are removed. The unseen **Cadillac** team (1.54 s) and **Madrid** circuit (1.29 s) are the worst-hit.
+- **Few-shot recovery is quick but partial**: one 2026 race pulls MAE down to ~0.76 s and two to ~0.75 s, then it plateaus - eight races still don't reach the in-era bar.
 - **SHAP** (via XGBoost's native TreeSHAP) shows the relationships that moved most are `position` and the new team, not the tyre curve, which the race-median target already absorbs.
 
 ## Setup
@@ -62,15 +62,15 @@ final_project/
 ├── notebooks/
 │   ├── 01_data_acquisition_validation.ipynb   # download, validate, cleaning funnel, target
 │   ├── 02_eda.ipynb                           # target by season, stint pace, pace change by circuit
-│   ├── 03_feature_engineering.ipynb           # features, unseen entities, encoding -> model table
+│   ├── 03_feature_engineering.ipynb           # qualifying, driver, in-race, circuit, weather features + leakage tests
 │   ├── 04_baselines_tuning.ipynb              # physics / XGBoost / residual, grouped-CV tuning, in-era check
 │   ├── 05_regime_shift.ipynb                  # normal drift vs 2026, error breakdowns
 │   ├── 06_adaptation.ipynb                    # few-shot recovery with 2026 races
 │   └── 07_diagnosis.ipynb                     # SHAP: which relationships changed
 ├── src/f1lap/                 # the pipeline + models, imported by the notebooks
 │   ├── download.py            # TracingInsights sparse checkout
-│   ├── clean.py               # load_raw, the cleaning funnel, and the target
-│   ├── features.py            # team/circuit mapping, fuel proxy, feature encoding
+│   ├── clean.py               # loaders (race, qualifying, session info), cleaning funnel, target
+│   ├── features.py            # all feature groups, leakage self-check, encoding
 │   └── models.py              # physics baseline, XGBoost, residual, metrics, experiment helpers
 ├── figures/                   # committed plots, written by the notebooks
 ├── results/                   # small committed outputs (tuned XGBoost params)
