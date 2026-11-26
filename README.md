@@ -162,10 +162,6 @@ The heavy data and modelling logic lives in `src/f1lap/` so the notebooks stay r
 
 **Race facts used** (championship clinch dates for the post-clinch robustness check): Formula1.com and ESPN race reports for the 2026 São Paulo GP, and Sky Sports for the 2026 Mexico City GP.
 
-## AI use
-
-We used Claude (Anthropic) heavily throughout this project as a coding and analysis collaborator. It helped find and vet the data source and draft the proposal, and it wrote most of the code in `src/f1lap/` and the notebooks, plus first drafts of the notebook commentary, this README and the process log, working from our direction and review. The research question, the core ideas (for example using qualifying pace as a weekly measurement of car pace, testing whether champions ease off once the titles are decided, and positions-gained racecraft), and the decisions about what to keep, what to drop and how to interpret the results were ours. We've gone through every part so we can explain it, and every number in this README is produced by the committed code.
-
 ## License
 
 MIT, see [LICENSE](LICENSE).
